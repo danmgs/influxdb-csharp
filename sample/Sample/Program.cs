@@ -1,6 +1,7 @@
 ﻿using InfluxDB.Collector;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -9,21 +10,21 @@ namespace Sample
 {
     public class Program
     {
-        public void Main(string[] args)
+        public static void Main(string[] args)
         {
             Collect().Wait();
         }
 
-        async Task Collect()
+        static async Task Collect()
         {
             var process = Process.GetCurrentProcess();
 
             Metrics.Collector = new CollectorConfiguration()
                 .Tag.With("host", Environment.GetEnvironmentVariable("COMPUTERNAME"))
                 .Tag.With("os", Environment.GetEnvironmentVariable("OS"))
-                .Tag.With("process", Path.GetFileName(process.MainModule.FileName))
+                .Tag.With("process", Path.GetFileName(process.MainModule.FileName)) 
                 .Batch.AtInterval(TimeSpan.FromSeconds(2))
-                .WriteTo.InfluxDB("http://192.168.99.100:8086", "data")
+                .WriteTo.InfluxDB(ConfigurationManager.AppSettings["InfluxDB.Url"], ConfigurationManager.AppSettings["InfluxDB.Database.Name"])
                 .CreateCollector();
 
             while (true)
